@@ -1,3 +1,3 @@
 # Winter Honeybee Transcriptome
- Methods: Tissue-specific transcriptional patterns underlie winter phenotype in honey bees (Apis mellifera)  
+Analysis of summer nurse & forager and winter honey bee fat body and flight muscle transcriptomes
  [>View Markdown<](https://sbresnahan.github.io/Winter-Honeybee-Transcriptome/)
