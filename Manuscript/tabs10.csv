@@ -1,0 +1,252 @@
+"GO.ID","Term","Annotated","Significant","Expected","percent.coverage","elim"
+"GO:0008150","biological_process",5944,968,993.78,0.162853297442799,4.6e-16
+"GO:0009987","cellular process",5565,911,930.42,0.163701707097934,1.2e-08
+"GO:0046578","regulation of Ras protein signal transdu...",69,24,11.54,0.347826086956522,4.3e-05
+"GO:0015990","electron transport coupled proton transp...",4,4,0.67,1,0.00053
+"GO:0010586","miRNA metabolic process",7,5,1.17,0.714285714285714,0.0013
+"GO:0008343","adult feeding behavior",10,6,1.67,0.6,0.00148
+"GO:0042752","regulation of circadian rhythm",73,21,12.2,0.287671232876712,0.00219
+"GO:0097010","eukaryotic translation initiation factor...",5,4,0.84,0.8,0.00235
+"GO:0007216","G protein-coupled glutamate receptor sig...",5,4,0.84,0.8,0.00235
+"GO:0043052","thermotaxis",14,7,2.34,0.5,0.00238
+"GO:0006417","regulation of translation",119,30,19.9,0.252100840336134,0.00287
+"GO:0045887","positive regulation of synaptic growth a...",38,13,6.35,0.342105263157895,0.00288
+"GO:0060213","positive regulation of nuclear-transcrib...",8,5,1.34,0.625,0.00303
+"GO:0010646","regulation of cell communication",737,149,123.22,0.202170963364993,0.00333
+"GO:0023051","regulation of signaling",737,149,123.22,0.202170963364993,0.00333
+"GO:0042593","glucose homeostasis",35,12,5.85,0.342857142857143,0.00406
+"GO:0007166","cell surface receptor signaling pathway",533,106,89.11,0.198874296435272,0.00415
+"GO:0007163","establishment or maintenance of cell pol...",170,39,28.42,0.229411764705882,0.00458
+"GO:0048813","dendrite morphogenesis",128,31,21.4,0.2421875,0.00473
+"GO:0000904","cell morphogenesis involved in different...",395,87,66.04,0.220253164556962,0.00484
+"GO:0016310","phosphorylation",483,94,80.75,0.194616977225673,0.00519
+"GO:0050764","regulation of phagocytosis",9,5,1.5,0.555555555555556,0.00597
+"GO:0030837","negative regulation of actin filament po...",16,7,2.68,0.4375,0.00601
+"GO:1900407","regulation of cellular response to oxida...",6,4,1,0.666666666666667,0.00619
+"GO:0046673","negative regulation of compound eye reti...",6,4,1,0.666666666666667,0.00619
+"GO:0002807","positive regulation of antimicrobial pep...",24,9,4.01,0.375,0.00639
+"GO:0031349","positive regulation of defense response",60,17,10.03,0.283333333333333,0.0066
+"GO:0051239","regulation of multicellular organismal p...",633,129,105.83,0.203791469194313,0.00749
+"GO:0007527","adult somatic muscle development",13,6,2.17,0.461538461538462,0.00805
+"GO:0014009","glial cell proliferation",13,6,2.17,0.461538461538462,0.00805
+"GO:0048666","neuron development",512,106,85.6,0.20703125,0.00818
+"GO:0061057","peptidoglycan recognition protein signal...",38,12,6.35,0.315789473684211,0.00851
+"GO:0007315","pole plasm assembly",52,15,8.69,0.288461538461538,0.00873
+"GO:0045572","positive regulation of imaginal disc gro...",17,7,2.84,0.411764705882353,0.0089
+"GO:0050877","nervous system process",306,62,51.16,0.202614379084967,0.00915
+"GO:0035195","gene silencing by miRNA",34,11,5.68,0.323529411764706,0.00951
+"GO:1900424","regulation of defense response to bacter...",48,14,8.03,0.291666666666667,0.01003
+"GO:0050803","regulation of synapse structure or activ...",169,43,28.26,0.254437869822485,0.01108
+"GO:0032989","cellular component morphogenesis",476,99,79.58,0.207983193277311,0.01139
+"GO:1905952","regulation of lipid localization",44,13,7.36,0.295454545454545,0.01149
+"GO:1900073","regulation of neuromuscular synaptic tra...",26,9,4.35,0.346153846153846,0.0115
+"GO:0051057","positive regulation of small GTPase medi...",35,11,5.85,0.314285714285714,0.01201
+"GO:0046579","positive regulation of Ras protein signa...",35,11,5.85,0.314285714285714,0.01201
+"GO:0046486","glycerolipid metabolic process",131,30,21.9,0.229007633587786,0.01228
+"GO:0007294","germarium-derived oocyte fate determinat...",22,8,3.68,0.363636363636364,0.01229
+"GO:0009649","entrainment of circadian clock",14,6,2.34,0.428571428571429,0.0123
+"GO:0031324","negative regulation of cellular metaboli...",510,96,85.27,0.188235294117647,0.01233
+"GO:0046470","phosphatidylcholine metabolic process",4,3,0.67,0.75,0.01248
+"GO:0000423","mitophagy",4,3,0.67,0.75,0.01248
+"GO:0048268","clathrin coat assembly",4,3,0.67,0.75,0.01248
+"GO:0043153","entrainment of circadian clock by photop...",7,4,1.17,0.571428571428571,0.01272
+"GO:0034453","microtubule anchoring",7,4,1.17,0.571428571428571,0.01272
+"GO:0009648","photoperiodism",7,4,1.17,0.571428571428571,0.01272
+"GO:2000369","regulation of clathrin-dependent endocyt...",7,4,1.17,0.571428571428571,0.01272
+"GO:0051058","negative regulation of small GTPase medi...",7,4,1.17,0.571428571428571,0.01272
+"GO:0045819","positive regulation of glycogen cataboli...",7,4,1.17,0.571428571428571,0.01272
+"GO:0005981","regulation of glycogen catabolic process",7,4,1.17,0.571428571428571,0.01272
+"GO:0006638","neutral lipid metabolic process",40,12,6.69,0.3,0.01314
+"GO:0006639","acylglycerol metabolic process",40,12,6.69,0.3,0.01314
+"GO:0010876","lipid localization",100,24,16.72,0.24,0.01347
+"GO:0007266","Rho protein signal transduction",31,10,5.18,0.32258064516129,0.01348
+"GO:0007165","signal transduction",1107,223,185.08,0.201445347786811,0.01395
+"GO:0040011","locomotion",535,104,89.45,0.194392523364486,0.014
+"GO:0010605","negative regulation of macromolecule met...",595,117,99.48,0.196638655462185,0.01446
+"GO:0048583","regulation of response to stimulus",776,161,129.74,0.207474226804124,0.01452
+"GO:1900426","positive regulation of defense response ...",27,9,4.51,0.333333333333333,0.01497
+"GO:0032879","regulation of localization",447,88,74.73,0.196868008948546,0.01502
+"GO:0010033","response to organic substance",413,79,69.05,0.191283292978208,0.01526
+"GO:0007267","cell-cell signaling",413,79,69.05,0.191283292978208,0.01526
+"GO:0030952","establishment or maintenance of cytoskel...",41,12,6.85,0.292682926829268,0.01608
+"GO:0090257","regulation of muscle system process",11,5,1.84,0.454545454545455,0.01681
+"GO:0044057","regulation of system process",46,13,7.69,0.282608695652174,0.01684
+"GO:0016055","Wnt signaling pathway",102,24,17.05,0.235294117647059,0.01711
+"GO:0060255","regulation of macromolecule metabolic pr...",1496,267,250.12,0.178475935828877,0.01744
+"GO:0006749","glutathione metabolic process",19,7,3.18,0.368421052631579,0.0175
+"GO:0030488","tRNA methylation",19,7,3.18,0.368421052631579,0.0175
+"GO:0006911","phagocytosis, engulfment",15,6,2.51,0.4,0.0179
+"GO:0009892","negative regulation of metabolic process",636,123,106.33,0.193396226415094,0.01796
+"GO:0010769","regulation of cell morphogenesis involve...",87,21,14.55,0.241379310344828,0.01876
+"GO:0016477","cell migration",259,52,43.3,0.200772200772201,0.01907
+"GO:0045214","sarcomere organization",33,10,5.52,0.303030303030303,0.02116
+"GO:0010648","negative regulation of cell communicatio...",307,60,51.33,0.195439739413681,0.02127
+"GO:0022604","regulation of cell morphogenesis",131,29,21.9,0.221374045801527,0.0214
+"GO:0030855","epithelial cell differentiation",319,62,53.33,0.19435736677116,0.0217
+"GO:0048522","positive regulation of cellular process",1259,228,210.49,0.18109610802224,0.0218
+"GO:0006964","positive regulation of biosynthetic proc...",8,4,1.34,0.5,0.0224
+"GO:0043471","regulation of cellular carbohydrate cata...",8,4,1.34,0.5,0.0224
+"GO:0010676","positive regulation of cellular carbohyd...",8,4,1.34,0.5,0.0224
+"GO:0010907","positive regulation of glucose metabolic...",8,4,1.34,0.5,0.0224
+"GO:2000104","negative regulation of DNA-dependent DNA...",8,4,1.34,0.5,0.0224
+"GO:0006448","regulation of translational elongation",8,4,1.34,0.5,0.0224
+"GO:0032924","activin receptor signaling pathway",8,4,1.34,0.5,0.0224
+"GO:0070875","positive regulation of glycogen metaboli...",8,4,1.34,0.5,0.0224
+"GO:0023057","negative regulation of signaling",308,60,51.49,0.194805194805195,0.02265
+"GO:0019220","regulation of phosphate metabolic proces...",250,50,41.8,0.2,0.02271
+"GO:0051174","regulation of phosphorus metabolic proce...",250,50,41.8,0.2,0.02271
+"GO:0048519","negative regulation of biological proces...",1158,212,193.61,0.18307426597582,0.02292
+"GO:1905331","negative regulation of morphogenesis of ...",2,2,0.33,1,0.02316
+"GO:0051570","regulation of histone H3-K9 methylation",2,2,0.33,1,0.02316
+"GO:0042247","establishment of planar polarity of foll...",2,2,0.33,1,0.02316
+"GO:1990918","double-strand break repair involved in m...",2,2,0.33,1,0.02316
+"GO:1905153","regulation of membrane invagination",2,2,0.33,1,0.02316
+"GO:0050913","sensory perception of bitter taste",2,2,0.33,1,0.02316
+"GO:0045337","farnesyl diphosphate biosynthetic proces...",2,2,0.33,1,0.02316
+"GO:0045338","farnesyl diphosphate metabolic process",2,2,0.33,1,0.02316
+"GO:0060099","regulation of phagocytosis, engulfment",2,2,0.33,1,0.02316
+"GO:0006421","asparaginyl-tRNA aminoacylation",2,2,0.33,1,0.02316
+"GO:1905535","regulation of eukaryotic translation ini...",2,2,0.33,1,0.02316
+"GO:1905536","negative regulation of eukaryotic transl...",2,2,0.33,1,0.02316
+"GO:1901407","regulation of phosphorylation of RNA pol...",2,2,0.33,1,0.02316
+"GO:0110109","negative regulation of imaginal disc-der...",2,2,0.33,1,0.02316
+"GO:0097202","activation of cysteine-type endopeptidas...",2,2,0.33,1,0.02316
+"GO:0045685","regulation of glial cell differentiation",2,2,0.33,1,0.02316
+"GO:0045687","positive regulation of glial cell differ...",2,2,0.33,1,0.02316
+"GO:0048261","negative regulation of receptor-mediated...",2,2,0.33,1,0.02316
+"GO:0001188","RNA polymerase I preinitiation complex a...",2,2,0.33,1,0.02316
+"GO:0009264","deoxyribonucleotide catabolic process",2,2,0.33,1,0.02316
+"GO:0035023","regulation of Rho protein signal transdu...",20,7,3.34,0.35,0.02347
+"GO:0042753","positive regulation of circadian rhythm",20,7,3.34,0.35,0.02347
+"GO:0006644","phospholipid metabolic process",132,29,22.07,0.21969696969697,0.02358
+"GO:0048814","regulation of dendrite morphogenesis",29,9,4.85,0.310344827586207,0.02414
+"GO:0048520","positive regulation of behavior",29,9,4.85,0.310344827586207,0.02414
+"GO:0019731","antibacterial humoral response",29,9,4.85,0.310344827586207,0.02414
+"GO:0030716","oocyte fate determination",29,9,4.85,0.310344827586207,0.02414
+"GO:0009896","positive regulation of catabolic process",130,32,21.73,0.246153846153846,0.02471
+"GO:0008156","negative regulation of DNA replication",12,5,2.01,0.416666666666667,0.02528
+"GO:0007626","locomotory behavior",155,33,25.91,0.212903225806452,0.02553
+"GO:0048523","negative regulation of cellular process",997,179,166.69,0.179538615847543,0.0258
+"GO:0045807","positive regulation of endocytosis",34,10,5.68,0.294117647058824,0.02602
+"GO:1905114","cell surface receptor signaling pathway ...",106,24,17.72,0.226415094339623,0.02667
+"GO:0050795","regulation of behavior",69,17,11.54,0.246376811594203,0.02688
+"GO:0006468","protein phosphorylation",364,69,60.86,0.18956043956044,0.02704
+"GO:0060249","anatomical structure homeostasis",139,30,23.24,0.215827338129496,0.0271
+"GO:0010883","regulation of lipid storage",39,11,6.52,0.282051282051282,0.02721
+"GO:0010647","positive regulation of cell communicatio...",376,71,62.86,0.188829787234043,0.02723
+"GO:0023056","positive regulation of signaling",376,71,62.86,0.188829787234043,0.02723
+"GO:0070050","neuron cellular homeostasis",25,8,4.18,0.32,0.02737
+"GO:0030706","germarium-derived oocyte differentiation",25,8,4.18,0.32,0.02737
+"GO:0007614","short-term memory",25,8,4.18,0.32,0.02737
+"GO:0043461","proton-transporting ATP synthase complex...",5,3,0.84,0.6,0.02767
+"GO:0071689","muscle thin filament assembly",5,3,0.84,0.6,0.02767
+"GO:0010603","regulation of cytoplasmic mRNA processin...",5,3,0.84,0.6,0.02767
+"GO:2000370","positive regulation of clathrin-dependen...",5,3,0.84,0.6,0.02767
+"GO:0031638","zymogen activation",5,3,0.84,0.6,0.02767
+"GO:0016114","terpenoid biosynthetic process",5,3,0.84,0.6,0.02767
+"GO:0048478","replication fork protection",5,3,0.84,0.6,0.02767
+"GO:0060269","centripetally migrating follicle cell mi...",5,3,0.84,0.6,0.02767
+"GO:0016601","Rac protein signal transduction",5,3,0.84,0.6,0.02767
+"GO:0031331","positive regulation of cellular cataboli...",115,29,19.23,0.252173913043478,0.02839
+"GO:0009966","regulation of signal transduction",628,124,105,0.197452229299363,0.02841
+"GO:0001932","regulation of protein phosphorylation",196,40,32.77,0.204081632653061,0.02885
+"GO:0032101","regulation of response to external stimu...",182,42,30.43,0.230769230769231,0.03065
+"GO:0009968","negative regulation of signal transducti...",284,55,47.48,0.193661971830986,0.03131
+"GO:0043900","regulation of multi-organism process",86,20,14.38,0.232558139534884,0.03134
+"GO:0002682","regulation of immune system process",171,40,28.59,0.233918128654971,0.03135
+"GO:0030178","negative regulation of Wnt signaling pat...",35,10,5.85,0.285714285714286,0.03162
+"GO:0031323","regulation of cellular metabolic process",1480,262,247.44,0.177027027027027,0.03252
+"GO:0046777","protein autophosphorylation",40,11,6.69,0.275,0.03254
+"GO:0010975","regulation of neuron projection developm...",108,24,18.06,0.222222222222222,0.03278
+"GO:0042773","ATP synthesis coupled electron transport",45,12,7.52,0.266666666666667,0.03293
+"GO:0048512","circadian behavior",92,21,15.38,0.228260869565217,0.03368
+"GO:0007622","rhythmic behavior",92,21,15.38,0.228260869565217,0.03368
+"GO:0006903","vesicle targeting",17,6,2.84,0.352941176470588,0.03384
+"GO:0007317","regulation of pole plasm oskar mRNA loca...",17,6,2.84,0.352941176470588,0.03384
+"GO:0060281","regulation of oocyte development",17,6,2.84,0.352941176470588,0.03384
+"GO:0042325","regulation of phosphorylation",227,45,37.95,0.198237885462555,0.03392
+"GO:0010562","positive regulation of phosphorus metabo...",136,29,22.74,0.213235294117647,0.03408
+"GO:0045937","positive regulation of phosphate metabol...",136,29,22.74,0.213235294117647,0.03408
+"GO:0010506","regulation of autophagy",103,23,17.22,0.223300970873786,0.0343
+"GO:0015980","energy derivation by oxidation of organi...",103,23,17.22,0.223300970873786,0.0343
+"GO:0048015","phosphatidylinositol-mediated signaling",26,8,4.35,0.307692307692308,0.03442
+"GO:0048017","inositol lipid-mediated signaling",26,8,4.35,0.307692307692308,0.03442
+"GO:0002064","epithelial cell development",274,53,45.81,0.193430656934307,0.03478
+"GO:0009890","negative regulation of biosynthetic proc...",357,67,59.69,0.187675070028011,0.03526
+"GO:0060964","regulation of gene silencing by miRNA",9,4,1.5,0.444444444444444,0.03555
+"GO:0060025","regulation of synaptic activity",9,4,1.5,0.444444444444444,0.03555
+"GO:0045477","regulation of nurse cell apoptotic proce...",9,4,1.5,0.444444444444444,0.03555
+"GO:0048934","peripheral nervous system neuron differe...",9,4,1.5,0.444444444444444,0.03555
+"GO:0048935","peripheral nervous system neuron develop...",9,4,1.5,0.444444444444444,0.03555
+"GO:0048139","female germ-line cyst encapsulation",9,4,1.5,0.444444444444444,0.03555
+"GO:0030708","germarium-derived female germ-line cyst ...",9,4,1.5,0.444444444444444,0.03555
+"GO:0046460","neutral lipid biosynthetic process",13,5,2.17,0.384615384615385,0.03604
+"GO:0046463","acylglycerol biosynthetic process",13,5,2.17,0.384615384615385,0.03604
+"GO:0007297","ovarian follicle cell migration",120,26,20.06,0.216666666666667,0.03616
+"GO:0003012","muscle system process",31,9,5.18,0.290322580645161,0.03673
+"GO:0006641","triglyceride metabolic process",31,9,5.18,0.290322580645161,0.03673
+"GO:0050832","defense response to fungus",31,9,5.18,0.290322580645161,0.03673
+"GO:0019222","regulation of metabolic process",1631,288,272.69,0.176578786020846,0.037
+"GO:0009894","regulation of catabolic process",226,48,37.79,0.212389380530973,0.03815
+"GO:0019094","pole plasm mRNA localization",41,11,6.85,0.268292682926829,0.03857
+"GO:0001510","RNA methylation",46,12,7.69,0.260869565217391,0.03861
+"GO:0007422","peripheral nervous system development",46,12,7.69,0.260869565217391,0.03861
+"GO:0007417","central nervous system development",229,45,38.29,0.196506550218341,0.03874
+"GO:0048667","cell morphogenesis involved in neuron di...",360,76,60.19,0.211111111111111,0.03929
+"GO:0051172","negative regulation of nitrogen compound...",462,84,77.24,0.181818181818182,0.04057
+"GO:0048518","positive regulation of biological proces...",1369,248,228.88,0.181154127100073,0.04107
+"GO:0042742","defense response to bacterium",138,34,23.07,0.246376811594203,0.04128
+"GO:0050896","response to stimulus",1977,361,330.54,0.182599898836621,0.04246
+"GO:0050794","regulation of cellular process",2679,476,447.9,0.177678238148563,0.04248
+"GO:0007293","germarium-derived egg chamber formation",78,18,13.04,0.230769230769231,0.04257
+"GO:0016334","establishment or maintenance of polarity...",27,8,4.51,0.296296296296296,0.04261
+"GO:0016241","regulation of macroautophagy",27,8,4.51,0.296296296296296,0.04261
+"GO:0048585","negative regulation of response to stimu...",325,61,54.34,0.187692307692308,0.04304
+"GO:0080134","regulation of response to stress",235,55,39.29,0.234042553191489,0.0431
+"GO:0031327","negative regulation of cellular biosynth...",355,66,59.35,0.185915492957746,0.04339
+"GO:2000241","regulation of reproductive process",89,20,14.88,0.224719101123595,0.04357
+"GO:0034249","negative regulation of cellular amide me...",52,13,8.69,0.25,0.04418
+"GO:0098722","asymmetric stem cell division",52,13,8.69,0.25,0.04418
+"GO:0007617","mating behavior",73,17,12.2,0.232876712328767,0.04429
+"GO:0031329","regulation of cellular catabolic process",205,44,34.27,0.214634146341463,0.04439
+"GO:1902875","regulation of embryonic pattern specific...",18,6,3.01,0.333333333333333,0.04442
+"GO:0062013","positive regulation of small molecule me...",18,6,3.01,0.333333333333333,0.04442
+"GO:0016333","morphogenesis of follicular epithelium",47,12,7.86,0.25531914893617,0.04494
+"GO:0030010","establishment of cell polarity",47,12,7.86,0.25531914893617,0.04494
+"GO:0045880","positive regulation of smoothened signal...",47,12,7.86,0.25531914893617,0.04494
+"GO:0007316","pole plasm RNA localization",42,11,7.02,0.261904761904762,0.04535
+"GO:0050773","regulation of dendrite development",42,11,7.02,0.261904761904762,0.04535
+"GO:0031346","positive regulation of cell projection o...",68,16,11.37,0.235294117647059,0.046
+"GO:0007606","sensory perception of chemical stimulus",68,16,11.37,0.235294117647059,0.046
+"GO:0009888","tissue development",825,146,137.93,0.176969696969697,0.0475
+"GO:0009617","response to bacterium",145,35,24.24,0.241379310344828,0.04752
+"GO:0006897","endocytosis",157,32,26.25,0.203821656050955,0.04761
+"GO:0010558","negative regulation of macromolecule bio...",345,64,57.68,0.185507246376812,0.048
+"GO:2000113","negative regulation of cellular macromol...",345,64,57.68,0.185507246376812,0.048
+"GO:0002066","columnar/cuboidal epithelial cell develo...",250,48,41.8,0.192,0.0481
+"GO:0051235","maintenance of location",90,20,15.05,0.222222222222222,0.04834
+"GO:0002065","columnar/cuboidal epithelial cell differ...",262,50,43.8,0.190839694656489,0.04871
+"GO:0031325","positive regulation of cellular metaboli...",682,127,114.02,0.186217008797654,0.04874
+"GO:0002253","activation of immune response",6,3,1,0.5,0.04914
+"GO:0035074","pupation",6,3,1,0.5,0.04914
+"GO:0043407","negative regulation of MAP kinase activi...",6,3,1,0.5,0.04914
+"GO:0061059","positive regulation of peptidoglycan rec...",6,3,1,0.5,0.04914
+"GO:1900247","regulation of cytoplasmic translational ...",6,3,1,0.5,0.04914
+"GO:0017182","peptidyl-diphthamide metabolic process",6,3,1,0.5,0.04914
+"GO:0017183","peptidyl-diphthamide biosynthetic proces...",6,3,1,0.5,0.04914
+"GO:0046580","negative regulation of Ras protein signa...",6,3,1,0.5,0.04914
+"GO:0016540","protein autoprocessing",6,3,1,0.5,0.04914
+"GO:1901661","quinone metabolic process",14,5,2.34,0.357142857142857,0.04923
+"GO:1901663","quinone biosynthetic process",14,5,2.34,0.357142857142857,0.04923
+"GO:0006743","ubiquinone metabolic process",14,5,2.34,0.357142857142857,0.04923
+"GO:0006744","ubiquinone biosynthetic process",14,5,2.34,0.357142857142857,0.04923
+"GO:0014013","regulation of gliogenesis",14,5,2.34,0.357142857142857,0.04923
+"GO:0045938","positive regulation of circadian sleep/w...",14,5,2.34,0.357142857142857,0.04923
+"GO:2000331","regulation of terminal button organizati...",23,7,3.85,0.304347826086957,0.04933
+"GO:0061058","regulation of peptidoglycan recognition ...",23,7,3.85,0.304347826086957,0.04933
+"GO:0099024","plasma membrane invagination",23,7,3.85,0.304347826086957,0.04933
+"GO:0090329","regulation of DNA-dependent DNA replicat...",23,7,3.85,0.304347826086957,0.04933
+"GO:0010324","membrane invagination",23,7,3.85,0.304347826086957,0.04933
+"GO:0097485","neuron projection guidance",227,44,37.95,0.193832599118943,0.04952
+"GO:0050789","regulation of biological process",2883,519,482.01,0.180020811654527,0.04961
+"GO:0046488","phosphatidylinositol metabolic process",74,17,12.37,0.22972972972973,0.04968
