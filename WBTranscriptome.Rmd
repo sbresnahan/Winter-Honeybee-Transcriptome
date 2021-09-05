@@ -1,0 +1,967 @@
+---
+title: "Methods: Tissue-specific transcriptional patterns underlie seasonal phenotypes in honey bees (*Apis mellifera*)"
+author:
+- name: Sean Bresnahan
+  affiliation: 
+  - &id Department of Entomology, Center for Pollinator Research, Huck Institutes of the Life Sciences, Pennsylvania State University
+  - &id3 Molecular, Cellular, and Integrative Biosciences Graduate Program, Huck Institutes of the Life Sciences, Pennsylvania State University
+  email: stb5321@psu.edu
+- name: Mehmet Döke
+  affiliation:
+  - *id
+  - &id2 Department of Biology, University of Puerto Rico, San Juan
+- name: Tugrul Giray
+  affiliation: *id2
+- name: Christina Grozinger
+  affiliation:
+  - *id
+  - *id3
+bibliography: Manuscript/references.bib
+csl: Manuscript/apa.csl
+output: 
+  BiocStyle::html_document:
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, message=F}
+# Set the code chunk options for knitr | in engine.opts we set bash = "-l" so that R Studio points to the native bash profile
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, eval=T,
+                      engine.opts = list(bash = "-l"))
+# Load packages
+library(Biostrings)
+library(tximport)
+library(plyr)
+library(kableExtra)
+library(xtable)
+library(ggplot2)
+library(viridis)
+library(DESeq2)
+library(ggdendro)
+library(grid)
+library(rrcov)
+library(topGO)
+library(GO.db)
+suppressWarnings(library(ViSEAGO))
+library(factoextra)
+```
+
+```{css, echo=F}
+# Some CSS code for knitr
+pre code {
+  white-space: pre-wrap;
+}
+```
+
+# Abstract
+
+Faced with adverse conditions, such as winter in temperate regions or hot and dry conditions in tropical regions, many insect species enter a state of diapause, a period of dormancy associated with a reduction or arrest of physical activity, development, and reproduction. Changes in common physiological pathways underlie diapause phenotypes in different insect species. However, most transcriptomic studies of diapause have not simultaneously evaluated and compared expression patterns in different tissues. Honey bees (*Apis mellifera*) represent a unique model system to study the mechanisms underpinning diapause-related phenotypes. In winter, honey bees exhibit a classic diapause phenotype, with reduced metabolic activity, increased physiological nutritional resources, and altered hormonal profiles. However, winter bees actively heat their colony by vibrating their wing muscles; thus, this tissue is not quiescent. Here, we evaluated the transcriptional profiles of flight muscle tissue and fat body tissue (involved in nutrient storage, metabolism and immune function) of winter bees. We also evaluated two behavioral phenotypes of summer bees: nurses, which exhibit high nutritional stores and low flight activity, and foragers, which exhibit low nutritional stores and high flight activity. We found winter bees and nurses have similar fat body transcriptional profiles, whereas winter bees and foragers have similar flight muscle transcriptional profiles. Additionally, differentially expressed genes were enriched in diapause-related GO terms. Thus, honey bees exhibit tissue-specific transcriptional profiles associated with seasonal phenotypes, laying the groundwork for future studies evaluating the mechanisms, evolution, and consequences of this tissue-specific regulation.
+
+# RNA-seq data analysis
+
+## Download reference genome 
+
+We first obtained the RefSeq *Apis mellifera* [Amel_HAv3.1 genome assembly](https://ftp.ncbi.nih.gov/genomes/refseq/invertebrate/Apis_mellifera/annotation_releases/104/GCF_003254395.2_Amel_HAv3.1/ "Amel_HAv3.1 genome assembly") and the NCBI Annotation Report v104 (AR104) GFF file from NCBI.
+
+```{bash, eval=F}
+DIR_INDEX="data/index"
+cd ${DIR_INDEX}
+
+wget -O Amel_HAv3.1.fna.gz https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/003/254/395/GCF_003254395.2_Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.fna.gz
+gunzip Amel_HAv3.1.fna.gz
+wget -O Amel_HAv3.1.gff.gz https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/003/254/395/GCF_003254395.2_Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.gff.gz
+gunzip Amel_HAv3.1.gff.gz
+```
+
+## Retrieve RNA-seq reads
+
+RNA libraries were prepared by the Sequencing and Genomic Technologies Shared Resource at the Duke Center for Genomic and Computational Biology, Durham, NC, and sequenced on an Illumina HiSeq 4000 platform. Transcriptomic data generated from this study were deposited in the NCBI Short Read Archive (SRA) database (BioProject accession [PRJNA601517](https://www.ncbi.nlm.nih.gov/bioproject/?term=prjna601517 "PRJNA601517")). 
+
+```{bash, eval=F}
+DIR_SRA="data/raw"
+
+cd ${DIR_SRA}
+
+SRA=("SRR10901308" "SRR10901307" "SRR10901296" "SRR10901291" "SRR10901290" \
+     "SRR10901289" "SRR10901288" "SRR10901287" "SRR10901286" "SRR10901285" \
+     "SRR10901306" "SRR10901305" "SRR10901304" "SRR10901303" "SRR10901302" \
+     "SRR10901301" "SRR10901300" "SRR10901299" "SRR10901298" "SRR10901297" \
+     "SRR10901295" "SRR10901294" "SRR10901293" "SRR10901292")
+
+for i in "${SRA[@]}"
+do
+  prefetch -O ${DIR_SRA} ${i}
+  fasterq-dump -O ${DIR_SRA} ${DIR_SRA}/${i}.sra
+  rm sra/{i}.sra
+done
+```
+
+## RNA-seq read pre-processing (TrimGalore!: cutadapt & FastQC)
+
+RNA-seq reads were assessed for quality control metrics after adapter trimming with Trim Galore [@krueger_trim_2019] - a wrapper tool around Cutadapt [@martin_cutadapt_2011] and FastQC [@andrews_fastqc_nodate].
+
+```{bash, eval=F}
+DIR_TRIM="data/trimmed"
+
+for i in "${SRA[@]}"
+do
+  trim_galore --fastqc -j 8 --paired -o ${DIR_TRIM} ${i}_1.fastq ${i}_2.fastq
+done
+```
+
+## Pseudo-alignment and transcript abundance estimates (Kallisto)
+
+We then used Kallisto [@bray_near-optimal_2016] to quantify transcript abundance by pseudo-alignment on the latest release of the *Apis mellifera* genome assembly Amel_HAv3.1 [@wallberg_hybrid_2019].
+
+```{bash, eval=F}
+cd ${DIR_INDEX}
+
+gffread Amel_HAv3.1.gff -g Amel_HAv3.1.fna -w Amel_HAv3.1_transcripts.fasta -F
+
+kallisto index --make-unique -i kallisto_Amel_HAv3.1 Amel_HAv3.1_transcripts.fasta
+
+cd ${DIR_TRIM}
+
+DIR_KALLISTO="data/kallisto"
+
+for i in "${SRA[@]}"
+do
+  kallisto quant -i ${DIR_INDEX}/kallisto_Amel_HAv3.1 -o ${DIR_KALLISTO}/${i} \
+   -t 2 ${i}_1_val_1.fq ${i}_2_val_2.fq
+done
+```
+
+## Generate gene expression matrix from kallisto transcript abundance estimates (tximport)
+
+We then compiled the transcript abundance estimates for each sample into an expression matrix in R [@r_core_team_r_2019], and summed by gene using the tximport method [@soneson_differential_2020].
+
+### Make tx2gene database
+
+```{r, eval=F}
+headers <- data.frame(name.full=names(readDNAStringSet(filepath = 'data/index/Amel_HAv3.1_transcripts.fasta', format="fasta")))
+headers.rna <- list()
+headers.gene <- list()
+headers.type <- list()
+for(i in 1:length(headers[[1]])){
+  x = headers[[1]][i]
+  xx = unlist(strsplit(x," "))
+  
+  xxx1 = grep("rna-", xx,value=T)
+  if(isEmpty(xxx1)){xxx1 = "NA-NA"}
+  xxxx1 = substring(xxx1, regexpr("-", xxx1) + 1, nchar(xxx1))
+  headers.rna[i] <- xxxx1
+  
+  xxx2 = grep("GeneID", xx,value=T)[1]
+  if(isEmpty(xxx2)){xxx2 = "NA-NA"}else{
+    xxxx2 = unlist(strsplit(xxx2,","))
+    xxxxx2 = grep("GeneID", xxxx2, value=T)
+    if(isEmpty(xxxxx2)){xxxxx2 = "NA:NA"}
+    xxxxxx2 = sapply(strsplit(xxxxx2,":"), "[", 2)
+    headers.gene[i] <- xxxxxx2}
+  
+  xxx3 = grep("gbkey", xx,value=T)[1]
+  if(isEmpty(xxx3)){xxx3 = "NA=NA"}
+  xxxx3 = sapply(strsplit(xxx3,"="), "[", 2)
+  headers.type[i] <- xxxx3
+}
+tx2gene <- data.frame(tx_id_ref=unlist(headers.rna),
+                      gene_id=unlist(headers.gene),
+                      type=unlist(headers.type))
+tx2gene$tx_id <- paste("rna",tx2gene$tx_id_ref,sep="-")
+tx2gene <- tx2gene[-grep("Gene",tx2gene$type),c("tx_id","gene_id")]
+tx2gene <- tx2gene[!tx2gene$gene_id=="NA",]
+write.csv(tx2gene,"data/index/tx2gene.csv",row.names=F)
+rm(i,headers,headers.gene,headers.rna,headers.type,
+   x,xx,xxx1,xxxx1,xxx2,xxxx2,xxxxx2,xxxxxx2,xxx3,xxxx3)
+```
+
+### tximport kallisto abundance.tsv files
+
+```{r, eval=F}
+tx2gene <- read.csv("data/index/tx2gene.csv")
+dirs.kallisto <- list.dirs("data/kallisto", recursive=FALSE)
+files.list <- list()
+for (i in 1:length(dirs.kallisto)){
+  files.list[i] <- paste(unlist(dirs.kallisto[i]),"abundance.tsv",sep="/")
+}
+txi <- tximport(unlist(files.list), type = "kallisto",
+                    tx2gene = tx2gene,geneIdCol="gene_id",txIdCol="tx_id")
+datExpr <- as.data.frame(txi[["counts"]])
+dirnames.l <- length(unlist(strsplit(unlist(dirs.kallisto),"/")[1]))
+dirnames <- sapply(strsplit(unlist(dirs.kallisto),"/"), "[", dirnames.l)
+names(datExpr) <- dirnames
+CDS_geneIDs <- unique(read.table("data/index/CDS_geneIDs.txt")[,c(1)])
+datExpr <- datExpr[row.names(datExpr)%in%CDS_geneIDs,]
+write.csv(datExpr,"data/res/counts.csv")
+write.csv(datExpr,"Manuscript/tabs2.csv")
+## Clear all
+rm(list=ls())
+```
+
+### Load sample metadata
+
+```{r}
+metadata <- read.csv("data/index/metadata.csv")
+metadata$Label <- rep.int(c("W1","W2","W3","W4",
+                            "F1","F2","F3","F4",
+                            "N1","N2","N3","N4"),2)
+metadata <- data.frame(lapply(metadata, factor))
+datExpr <- read.csv("data/res/counts.csv")
+row.names(datExpr) <- datExpr$X
+datExpr$X <- NULL
+```
+
+## Table S1
+
+Through RNA-sequencing we obtained an average transcript abundance of ~13.8 million pseudo-alignments for each biological replicate of nurse, forager, and winter honey bees.
+
+```{r}
+tabs1 <- data.frame(Estimate=colSums(datExpr))
+tabs1 <- data.frame(Accession=row.names(tabs1),Estimate=tabs1$Estimate)
+tabs1 <- plyr::join(tabs1,metadata,by="Accession")
+tabs1 <- tabs1[,c(1,4,3,6,2)]
+tabs1 <- tabs1[order(tabs1$Tissue,tabs1$Label),]
+tabs1$Tissue <- revalue(tabs1$Tissue, c("A"="Fat body", "T"="Flight muscle"))
+mean(tabs1$Estimate)
+tabs1 %>% 
+  kbl(label="Table S1", caption = "RNAseq library metadata and pseudoalignment rates on the Amel_HAv3.1 kallisto reference transcriptome",
+      row.names=F) %>% kable_classic(full_width = F)
+write.csv(tabs1,"Manuscript/tabs1.csv")
+```
+
+Low count genes (\< 1 count across \> 25% of samples) and genes with 0% variance across all samples were removed from the analysis.
+
+```{r}
+datExpr <- datExpr[rowMeans(datExpr!=0)>0.25, ]
+datExpr <- round(datExpr)
+```
+
+This resulted in 92.4% (9,178/9,935) of the *A. mellifera* protein coding genes [@wallberg_hybrid_2019] being represented in this study.
+
+```{r}
+head(datExpr[c(1:5),c(1:5)]) %>% 
+  kbl(caption = "Preview of the count matrix: first 5 genes and samples") %>%
+  kable_classic(full_width = F)
+```
+
+# Differential gene expression analysis
+
+We used DESeq2 [@love_moderated_2014] to assess differential expression of protein-coding genes (DEGs) within tissue types between nurse, forager, and winter bees, using colony as a co-factor. In each analysis, we applied the default Benjamini-Hochberg [@benjamini_controlling_1995] correction and set the threshold for differential expression at $padj<0.05$. Gene ontology enrichment analyses were performed using topGO [@alexa_improved_2006] using Flybase orthologs. To assess sample relationships and variance, hierarchical clustering analysis was conducted on the variance stabilized transformed counts generated by DESeq2.
+
+```{r}
+# CUSTOM FUNCTION: this function generates an hclust plot via heatmap.2. We use this function simply to automate the process, rather than manually data wrangling for each 
+plot.hclust <- function(data,sample.info,title,tissue=c("A","T")){
+  sample.info <- sample.info[sample.info$Tissue==tissue,]
+  names(data) <- sample.info$Label
+  
+  data.plot <- cor(data)
+  data.dendro <- hclust(dist(data.plot))
+  data.dendro <- dendro_data(data.dendro)
+  label.order <- data.dendro[["labels"]][["label"]]
+  
+  p1.plot <- ggplot() + geom_segment(data = segment(data.dendro), 
+                               aes_string(x = "x", y = "y", 
+                                          xend = "xend", yend = "yend")) + 
+    geom_text(data = label(data.dendro), 
+              aes_string(x = "x", y = "y", label = "label"), 
+              hjust = 0.5, vjust = 1.5, angle = 0, size=6) + 
+    scale_y_continuous(expand=c(0.2, 0)) +
+    xlab("") + ylab("") +
+    theme_void()
+  
+  p2.plot <- ggplot() + geom_segment(data = segment(data.dendro), 
+                               aes_string(x = "x", y = "y", 
+                                          xend = "xend", yend = "yend")) + 
+    geom_text(data = label(data.dendro), 
+              aes_string(x = "x", y = "y", label = "label"), 
+              hjust = -0.5, vjust = 0.5, angle = 0, size=6) + 
+    xlab("") + ylab("") +
+    theme_void() + coord_flip() + scale_y_reverse(expand=c(0.4,0))
+  
+  data.plot <- as.matrix(dist(t(data)))
+  data.plot <- data.plot[label.order,label.order]
+  data.plot[lower.tri(data.plot)] <- NA
+  data.plot <- reshape2::melt(data.plot)
+
+  data.plot$Var1 <- factor(data.plot$Var1, 
+                           levels = label.order)
+  data.plot$Var2 <- factor(data.plot$Var2, 
+                           levels = label.order)
+  
+  g.plot <- ggplot(data = data.plot, aes(x = Var1, y = Var2)) +
+  geom_tile(aes(fill = value)) +
+  scale_fill_viridis(direction=-1, na.value="white") +
+    xlab("") + ylab("") +
+    theme_void() + guides(fill=F)
+  
+  grid.newpage()
+  print(g.plot, 
+        vp = viewport(x = 0.65, y = 0.35, width = 0.7, height = 0.7))
+  print(p1.plot, 
+        vp = viewport(x = 0.65, y = 0.85, width = 0.7, height = 0.3))
+  print(p2.plot, 
+        vp = viewport(x = .155, y = 0.35, width = 0.3, height = 0.7))
+}
+
+# CUSTOM FUNCTION: because heatmap.2 does not save a plot environment, we have to do this manually. So rather than call plot.hclust, we will call create.hclustPlot
+create.hclustPlot <- function(...){
+  plot_heatmap <- function() plot.hclust(...)
+}
+```
+
+## DESeq: Fat body
+
+```{r}
+datExpr.A <- as.matrix(datExpr[names(datExpr)%in%metadata[metadata$Tissue=="A","Accession"]])
+dds.A <- DESeqDataSetFromMatrix(countData=datExpr.A, 
+                                colData=metadata[metadata$Tissue=="A",], 
+                                design=~Colony+Group)
+DESeq.A <- DESeq(dds.A)
+dds.A.transform <- data.frame(assay(varianceStabilizingTransformation(DESeq.A, blind=F)))
+```
+
+## DESeq: Flight muscle
+
+```{r}
+# Subset datExpr by columns corresponding to thorax tissue samples
+datExpr.T <- as.matrix(datExpr[names(datExpr)%in%metadata[metadata$Tissue=="T","Accession"]])
+dds.T <- DESeqDataSetFromMatrix(countData=datExpr.T, 
+                                colData=metadata[metadata$Tissue=="T",], 
+                                design=~Colony+Group)
+DESeq.T <- DESeq(dds.T)
+dds.T.transform <- data.frame(assay(varianceStabilizingTransformation(DESeq.T, blind=F)))
+```
+
+## Figure S1
+
+```{r}
+plot.hclust.A <- create.hclustPlot(dds.A.transform, metadata,
+                             '',tissue="A")
+plot.hclust.A()
+ggsave(file="Manuscript/figs1.pdf", plot=plot.hclust.A(), width=10, height=8)
+```
+
+**Figure S1**: Fat body tissue sample relationships between nurse, forager, and winter bees as determined by pairwise correlations and hierarchical clustering. Sample relationships determined using all tested genes (*n* = 9,178).
+
+## Figure S2
+
+```{r, echo=F}
+pcaData <- plotPCA(varianceStabilizingTransformation(DESeq.A, blind=F), intgroup="Group", returnData=T)
+pcaData$label <- metadata[metadata$Tissue=="A","Label"]
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+g <- ggplot(pcaData, aes(PC1, PC2, color=Group)) +
+  geom_point(size=0) + geom_text(aes(label=label)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() + theme_classic() +
+  theme(legend.position = "none",
+        text = element_text(size=20))
+g
+ggsave(file="Manuscript/figs2.pdf", plot=g, width=10, height=8)
+```
+
+**Figure S2**: Fat body tissue sample relationships between nurse, forager, and winter bees as determined by principal component analysis (PCA). Sample relationships determined using all tested genes (*n* = 9,178).
+
+## Outlier detection
+
+```{r}
+checkpca <- PcaGrid(t(dds.A.transform)) 
+outliers <- which(checkpca@flag=='FALSE')
+print(paste("Outlier:",names(outliers),sep=" "))
+```
+
+```{r}
+# Remove the offending accessions
+datExpr <- datExpr[,!names(datExpr)%in%names(outliers)]
+metadata <- metadata[!metadata$Accession%in%names(outliers),]
+```
+
+```{r}
+datExpr.A <- as.matrix(datExpr[names(datExpr)%in%metadata[metadata$Tissue=="A","Accession"]])
+dds.A <- DESeqDataSetFromMatrix(countData=datExpr.A, 
+                                colData=metadata[metadata$Tissue=="A",], 
+                                design=~Colony+Group)
+DESeq.A <- DESeq(dds.A)
+dds.A.transform <- data.frame(assay(varianceStabilizingTransformation(DESeq.A, blind=F)))
+```
+
+```{r}
+checkpca <- PcaGrid(t(dds.A.transform)) 
+outliers <- which(checkpca@flag=='FALSE')
+print(paste("Outlier:",names(outliers),sep=" "))
+```
+
+```{r}
+# Remove the offending accessions
+datExpr <- datExpr[,!names(datExpr)%in%names(outliers)]
+metadata <- metadata[!metadata$Accession%in%names(outliers),]
+```
+
+```{r}
+datExpr.A <- as.matrix(datExpr[names(datExpr)%in%metadata[metadata$Tissue=="A","Accession"]])
+dds.A <- DESeqDataSetFromMatrix(countData=datExpr.A, 
+                                colData=metadata[metadata$Tissue=="A",], 
+                                design=~Colony+Group)
+DESeq.A <- DESeq(dds.A)
+dds.A.transform <- data.frame(assay(varianceStabilizingTransformation(DESeq.A, blind=F)))
+```
+
+We observed that two of the nurse fat body samples (N1 and N3) were outliers from these analyses, as each created separate branches independent of the other fat body samples that clustered as expected by phenotype (Figure S1) and explained most of the variance between the fat body samples (Figure S2). We statistically confirmed via a PCA projection pursuit method of outlier detection for RNA-seq libraries [@chen_robust_2020] that these samples were indeed outliers (Figure S3). FastQC did not report major differences in any of the default sequence quality metrics apart from reads corresponding to highly overrepresented sequences. A local BLASTN [@mcginnis_blast_2004] search of the overrepresented sequences revealed many hits with 100% identity and 100% query cover for *A. mellifera* mitochondrial ribosomal RNAs, a common source of contamination during library preparation [@zhao_comparison_2014]. Given these findings, we removed these samples from all analyses.
+
+## Figure 1
+
+```{r}
+plot.hclust.A <- create.hclustPlot(dds.A.transform, metadata,
+                             '',tissue="A")
+plot.hclust.A()
+ggsave(file="Manuscript/fig1a.pdf", plot=plot.hclust.A(), width=10, height=8)
+
+plot.hclust.T <- create.hclustPlot(dds.T.transform, metadata,
+                             '',tissue="T")
+plot.hclust.T()
+ggsave(file="Manuscript/fig1b.pdf", plot=plot.hclust.T(), width=10, height=8)
+```
+
+**Figure 1**: **Clustering analysis demonstrates transcriptional correlations between winter bees and nurse bees in fat body tissue (a) and winter bees and foragers in flight muscle tissue (b)**. The relationships among the samples were determined by pairwise correlations and hierarchical clustering, using all tested genes (*n* = 9,178).
+
+```{r}
+# CUSTOM FUNCTION: Generate lists of up- and down-regulated DEGs and optionally save csv
+## object: DESeq object
+## contVar: contrast variable
+## group1: compare group A to...
+## group2: ...group B
+## padj.threshold: filter results by adjusted p value
+## LFC.threshold: filter results by log2fc
+## save.results: save DESeq2 results, filtered by padj.threshold and |LFC.threshold|
+## results.filename: set when save.results==T
+cond.contrast <- function(object,contVar,group1,group2,padj.threshold,
+                          LFC.threshold=0,save.results=T,results.filename){
+  # Create a data.frame for the results of the DESeq object given a contrast
+  res <- data.frame(results(object, contrast=c(contVar,group1,group2)))
+  # Order by padj
+  res <- res[order(res$padj),]
+  # Filter by padj.threshold
+  DEGs <- res[res$padj<padj.threshold,]
+  # Remove empty rows
+  DEGs <- na.omit(DEGs)
+  # Get list of upregulated genes, considering log2fc or not
+  if(LFC.threshold==0){up <- row.names(DEGs[DEGs$log2FoldChange>0,])}else{
+    up <- row.names(DEGs[DEGs$log2FoldChange>LFC.threshold,])
+  }
+  # Get list of downregulated genes, considering log2fc or not
+  if(LFC.threshold==0){down <- row.names(DEGs[DEGs$log2FoldChange<0,])}else{
+    down <- row.names(DEGs[DEGs$log2FoldChange<-LFC.threshold,])
+  }
+  # Optionally, save csv
+  if(save.results==T){write.csv(DEGs,results.filename)}
+  return(list(up,down,res))
+}
+```
+
+## Tables S3-S8
+
+```{r}
+# Call cond.contrast for each contrast
+NvF.A <- cond.contrast(DESeq.A,"Group","N","F",
+                       padj.threshold=0.05,
+                       save.results=T,
+                       results.filename="Manuscript/tabs3.csv")
+
+WvF.A <- cond.contrast(DESeq.A,"Group","W","F",
+                       padj.threshold=0.05,
+                       save.results=T,
+                       results.filename="Manuscript/tabs4.csv")
+
+WvN.A <- cond.contrast(DESeq.A,"Group","W","N",
+                       padj.threshold=0.05,
+                       save.results=T,
+                       results.filename="Manuscript/tabs5.csv")
+```
+
+```{r}
+# Call cond.contrast for each contrast
+NvF.T <- cond.contrast(DESeq.T,"Group","N","F",
+                       padj.threshold=0.05,
+                       save.results=T,
+                       results.filename="Manuscript/tabs6.csv")
+
+WvF.T <- cond.contrast(DESeq.T,"Group","W","F",
+                       padj.threshold=0.05,
+                       save.results=T,
+                       results.filename="Manuscript/tabs7.csv")
+
+WvN.T <- cond.contrast(DESeq.T,"Group","W","N",
+                       padj.threshold=0.05,
+                       save.results=T,
+                       results.filename="Manuscript/tabs8.csv")
+```
+
+## Table 1
+
+```{r}
+# Create data.frame of DEG counts for each contrast
+DEGs <- data.frame(Tissue=c(rep("Abdomen",3),rep("Thorax",3)),
+                   Contrast=c("NvF","WvN","WvF","NvF","WvN","WvF"),
+                   Upregulated=c(length(NvF.A[[1]]),length(WvN.A[[1]]),length(WvF.A[[1]]),
+                                 length(NvF.T[[1]]),length(WvN.T[[1]]),length(WvF.T[[1]])),
+                   Downregulated=c(length(NvF.A[[2]]),length(WvN.A[[2]]),length(WvF.A[[2]]),
+                                 length(NvF.T[[2]]),length(WvN.T[[2]]),length(WvF.T[[2]])))
+# Save DEGs to DEG_table.csv
+write.csv(DEGs,"Manuscript/tab1.csv")
+```
+
+```{r}
+DEGs %>% 
+  kbl(label="Table 1", caption = "Summary of the differentially expressed protein coding genes across winter, nurse and forager bee samples. The total number of differentially expressed and number of up- versus down-regulated genes are provided.",
+      row.names=F) %>% kable_classic(full_width = F)
+```
+
+# Gene Ontology Enrichment Analysis (topGO)
+
+Gene ontology (GO) enrichment analyses were performed with the “elim” method from topGO [@alexa_improved_2006], using *Drosophila melanogaster* orthologs of honey bee genes converted via a one-to-one reciprocal best hit BLAST (Table S15).
+
+```{r}
+dmel_go <- read.table("data/index/dmel_gene_association.fb",
+                      sep="\t",header=1,
+                      comment.char="!",
+                      na.strings=".", 
+                      stringsAsFactors=FALSE,
+                      quote="", fill=FALSE)[,c(1,2,3,5,7)]
+names(dmel_go) <- c("taxid","gene_id","gene_symbol","GOID","evidence")
+dmel_go$gene_symbol <- dmel_go$gene_id
+dmel_go <- dmel_go[dmel_go$GOID%in%keys(GO.db),]
+dmel_go <- dmel_go[!dmel_go$evidence=="ND",]
+dmel_go <- dmel_go[complete.cases(dmel_go), ]
+amel_to_dmel <- read.csv("data/index/amel_to_dmel.csv")
+dmel_go <- dmel_go[dmel_go$gene_id%in%amel_to_dmel$dmel.gene,]
+write.table(dmel_go,"data/index/dmel_custom.txt",
+            sep="\t",quote=F,row.names=F)
+Custom_GENE2GO <- ViSEAGO::Custom2GO("data/index/dmel_custom.txt")
+Custom_GENE2GO <- ViSEAGO::annotate("FB",Custom_GENE2GO)
+```
+
+## GOEA function
+
+```{r}
+GOEA <- function(DEG.object,contrast,tissue){
+  geneList0 <- amel_to_dmel$dmel.gene
+  myInterestingGenes <- c(unlist(DEG.object[1]),
+                          unlist(DEG.object[2]))
+  myInterestingGenes <- amel_to_dmel[amel_to_dmel$amel.gene%in%myInterestingGenes,2]
+  geneList <- factor(as.integer(geneList0 %in% myInterestingGenes))
+  names(geneList) <- geneList0
+  GOdata <- new("topGOdata", ontology = "BP", allGenes = geneList,
+                annot = annFUN.gene2GO, gene2GO = Custom_GENE2GO@BP)
+  test <- runTest(GOdata, algorithm ="elim", statistic = "fisher")
+  results <- GenTable(GOdata,elim=test,topNodes=length(test@score))
+  results <- suppressWarnings(results[!is.na(as.numeric(as.character(results$elim))),])
+  results <- suppressWarnings(results[!is.na(results$elim),])
+  results$elim <- as.numeric(results$elim)
+  results$percent.coverage <- results$Significant/results$Annotated
+  results.sig <- results[results$elim<0.05,]
+  rank <- list()
+  for(i in 1:length(results.sig$GO.ID)){
+    rank[i] <- length(unlist(as.list(GOBPCHILDREN[results.sig$GO.ID[i]])))
+  }
+  results.sig$rank <- unlist(rank)
+  results.sig$contrast <- contrast
+  results.sig$tissue <- tissue
+  return(results.sig)
+}
+```
+
+## GOEA (Tables S9-S14)
+
+```{r}
+NvF.A.GO <- GOEA(NvF.A,"NvF","Fat body")
+write.csv(NvF.A.GO[,c(1:5,7,6)],"Manuscript/tabs9.csv",row.names=F)
+WvF.A.GO <- GOEA(WvF.A,"WvF","Fat body")
+write.csv(WvF.A.GO[,c(1:5,7,6)],"Manuscript/tabs10.csv",row.names=F)
+WvN.A.GO <- GOEA(WvN.A,"WvN","Fat body")
+write.csv(WvN.A.GO[,c(1:5,7,6)],"Manuscript/tabs11.csv",row.names=F)
+
+NvF.T.GO <- GOEA(NvF.T,"NvF","Flight muscle")
+write.csv(NvF.T.GO[,c(1:5,7,6)],"Manuscript/tabs12.csv",row.names=F)
+WvF.T.GO <- GOEA(WvF.T,"WvF","Flight muscle")
+write.csv(WvF.T.GO[,c(1:5,7,6)],"Manuscript/tabs13.csv",row.names=F)
+WvN.T.GO <- GOEA(WvN.T,"WvN","Flight muscle")
+write.csv(WvN.T.GO[,c(1:5,7,6)],"Manuscript/tabs14.csv",row.names=F)
+```
+
+## Tables 3 & 4
+
+```{r}
+percent <- function(x, digits = 2, format = "f", ...){
+  paste0(formatC(x * 100, format = format, digits = digits, ...), "%")
+}
+
+tab3 <- rbind(NvF.A.GO,WvF.A.GO,WvN.A.GO,
+              NvF.T.GO,WvF.T.GO,WvN.T.GO)
+tab4 <- tab3[tab3$tissue=="Flight muscle",]
+tab3 <- tab3[tab3$tissue=="Fat body",]
+DEGs_A <- length(unique(c(NvF.A[[1]],NvF.A[[2]],
+                   WvF.A[[1]],WvF.A[[2]],
+                   WvN.A[[1]],WvN.A[[2]])))
+DEGs_T <- length(unique(c(NvF.T[[1]],NvF.T[[2]],
+                   WvF.T[[1]],WvF.T[[2]],
+                   WvN.T[[1]],WvN.T[[2]])))
+
+tab3 <- tab3[tab3$elim<0.01,]
+tab3 <- tab3[tab3$Annotated<(DEGs_A*0.25),]
+tab3 <- tab3[order(-tab3$Annotated),]
+row.names(tab3) <- NULL
+tab3 <- tab3[1:20,]
+tab3$percent.coverage <- percent(tab3$percent.coverage)
+tab3$Coverage <- paste(paste(tab3$Significant,
+                             tab3$Annotated,sep="/"),
+                       paste("(",tab3$percent.coverage,")",sep=""),sep=" ")
+tab3 <- tab3[,c(9,1,2,11,6)]
+names(tab3) <- c("Contrast","GO.ID","Term","Coverage","p")
+tab3 <- tab3[order(tab3$Contrast),]
+tab3$p <- formatC(tab3$p, format = "e", digits = 2)
+tab3 %>% 
+  kbl(label="Table 3",
+      caption = "Significantly enriched gene ontology terms identified in fat body DEGs", row.names=F) %>%
+  kable_classic(full_width = F)
+write.csv(tab3,"Manuscript/tab3.csv")
+```
+
+```{r}
+tab4 <- tab4[tab4$elim<0.01,]
+tab4 <- tab4[tab4$Annotated<(DEGs_A*0.25),]
+tab4 <- tab4[order(-tab4$Annotated),]
+row.names(tab4) <- NULL
+tab4 <- tab4[1:20,]
+tab4$percent.coverage <- percent(tab4$percent.coverage)
+tab4$Coverage <- paste(paste(tab4$Significant,
+                             tab4$Annotated,sep="/"),
+                       paste("(",tab4$percent.coverage,")",sep=""),sep=" ")
+tab4 <- tab4[,c(9,1,2,11,6)]
+names(tab4) <- c("Contrast","GO.ID","Term","Coverage","p")
+tab4 <- tab4[order(tab4$Contrast),]
+tab4$p <- formatC(tab4$p, format = "e", digits = 2)
+tab4 %>% 
+  kbl(label="Table 4",
+      caption = "Significantly enriched gene ontology terms identified in flight muscle DEGs", row.names=F) %>%
+  kable_classic(full_width = F)
+write.csv(tab4,"Manuscript/tab4.csv")
+```
+
+# K-means clustering
+
+We performed k-means clustering [@oyelade_clustering_nodate, @kassambara_factoextra_2019] to specifically test whether the tissue-specific transcriptomes of winter bees had more in common with foragers or nurses, given *k* = 2 clusters (see Figure S4 for the variance explained by additional values of *k*). Separate tests were performed using: 1) all genes passing our initial low-count filter (*n* = 9,178), and 2) only forager vs nurse DEGs (Figure S5). 
+
+## Subset gene expression by all DEGs
+
+```{r}
+A.gene.list.union <- unique(c(WvF.A[[2]],WvF.A[[1]],WvN.A[[2]],WvN.A[[1]]))
+T.gene.list.union <- unique(c(WvF.T[[2]],WvF.T[[1]],WvN.T[[2]],WvN.T[[1]]))
+gene.list.union <- unique(c(A.gene.list.union,T.gene.list.union))
+
+A.union.dds.transform <- dds.A.transform[row.names(dds.A.transform)%in%A.gene.list.union,]
+T.union.dds.transform <- dds.T.transform[row.names(dds.T.transform)%in%T.gene.list.union,]
+
+tempA <- A.union.dds.transform[row.names(A.union.dds.transform)%in%gene.list.union,]
+tempT <- T.union.dds.transform[row.names(T.union.dds.transform)%in%gene.list.union,]
+tempA <- tempA[match(row.names(tempT), row.names(tempA)),]
+
+union.dds.transform <- cbind(tempA,tempT)
+```
+
+## Subset gene expression by forager vs. nurse DEGs
+
+```{r}
+FvN.A.gene.list.union <- intersect(unique(c(WvF.A[[2]],WvF.A[[1]],WvN.A[[2]],WvN.A[[1]])),
+                                   unique(NvF.A[[2]],NvF.A[[1]]))
+FvN.T.gene.list.union <- intersect(unique(c(WvF.T[[2]],WvF.T[[1]],WvN.T[[2]],WvN.T[[1]])),
+                                   unique(NvF.T[[2]],NvF.T[[1]]))
+FvN.gene.list.union <- unique(c(FvN.A.gene.list.union,FvN.T.gene.list.union))
+
+FvN.A.union.dds.transform <- dds.A.transform[row.names(dds.A.transform)%in%FvN.A.gene.list.union,]
+FvN.T.union.dds.transform <- dds.T.transform[row.names(dds.T.transform)%in%FvN.T.gene.list.union,]
+
+tempA <- A.union.dds.transform[row.names(A.union.dds.transform)%in%FvN.gene.list.union,]
+tempT <- T.union.dds.transform[row.names(T.union.dds.transform)%in%FvN.gene.list.union,]
+tempA <- tempA[match(row.names(tempT), row.names(tempA)),]
+
+FvN.union.dds.transform <- cbind(tempA,tempT)
+```
+
+## Test optimal number of clusters
+
+```{r}
+km.data.A <- A.union.dds.transform[apply(A.union.dds.transform, 1, var) != 0,]
+km.data.A <- t(km.data.A)
+
+wss.A <- sapply(1:4, 
+              function(k){kmeans(km.data.A, 
+                                 k, 
+                                 nstart=50,
+                                 iter.max = 15 )$tot.withinss})
+wss.A.df <- data.frame(cluster=c(1:4),
+                     WSS=wss.A)
+wss.A.plot <- ggplot(data=wss.A.df, aes(x=cluster, y=WSS)) +
+  geom_line() + geom_point() + theme_classic() +
+  xlab("Number of clusters K") +
+  ylab("Total within-clusters sum of squares") +
+  scale_x_continuous(breaks=c(1,2,3,4)) +
+  theme(text=element_text(size=16)) +
+  ggtitle("Fat body")
+wss.A.plot
+ggsave(file="Manuscript/figs4a.pdf", plot=wss.A.plot, width=5, height=5)
+```
+
+```{r}
+km.data.T <- T.union.dds.transform[apply(T.union.dds.transform, 1, var) != 0,]
+km.data.T <- t(km.data.T)
+
+wss.T <- sapply(1:4, 
+              function(k){kmeans(km.data.T, 
+                                 k, 
+                                 nstart=50,
+                                 iter.max = 15 )$tot.withinss})
+wss.T.df <- data.frame(cluster=c(1:4),
+                     WSS=wss.T)
+wss.T.plot <- ggplot(data=wss.T.df, aes(x=cluster, y=WSS)) +
+  geom_line() + geom_point() + theme_classic() +
+  xlab("Number of clusters K") +
+  ylab("Total within-clusters sum of squares") +
+  scale_x_continuous(breaks=c(1,2,3,4)) +
+  theme(text=element_text(size=16)) +
+  ggtitle("Flight muscle")
+wss.T.plot
+ggsave(file="Manuscript/figs4b.pdf", plot=wss.T.plot, width=5, height=5)
+```
+
+**Figure S4**: Within-cluster variance explained by different values of *k* using all tested genes (*n* = 9,178).
+
+## mod.fviz_cluster function
+
+```{r}
+mod.fviz_cluster <- function(data,sample.info,showLegend=T,K,lim=150) 
+{
+  data <- data[apply(data, 1, var) != 0,]
+  data <- t(data)
+  object <- kmeans(data,K,iter.max=1000,nstart=2)
+  
+  f <- fviz_cluster(object, data = data, geom="text",
+                    repel=T,show.clust.cent=F,ellipse=T,
+                    ellipse.type="confidence",labelsize=10,
+                    main="",
+                    ggtheme=theme_classic(),
+                    ellipse.level=.95) + theme(legend.position = "none")
+  
+  f.y <- sapply(strsplit(f[["labels"]][["y"]],"Dim2 "),"[", 2)
+  f.y <- gsub("\\(", "", f.y)
+  f.y <- gsub("\\)", "", f.y)
+  f.y <- paste("PC2:",f.y,"variance",sep=" ")
+  
+  f.x <- sapply(strsplit(f[["labels"]][["x"]],"Dim1 "),"[", 2)
+  f.x <- gsub("\\(", "", f.x)
+  f.x <- gsub("\\)", "", f.x)
+  f.x <- paste("PC1:",f.x,"variance",sep=" ")
+  
+  d <- data.frame(PC1 = f[["data"]]$x, PC2 = f[["data"]]$y, 
+                  group = sample.info$Group,
+                  cluster = f[["data"]]$cluster)
+  
+  g <- ggplot(data = d, aes(x = PC1, y = PC2, color = cluster, shape = group)) + 
+    geom_point(size = 3) + xlab(f.x) + ylab(f.y)  + theme_classic() + 
+    stat_ellipse(type = "norm", linetype = 2, inherit.aes = F, 
+                 aes(x = PC1, y = PC2, color = cluster)) +
+    stat_ellipse(type = "t", inherit.aes = F, 
+                 aes(x = PC1, y = PC2, color = cluster)) + 
+    theme(text = element_text(size=20),
+          plot.margin = margin(1, 1, 1, 1, "cm"),
+          legend.title=element_blank()) + guides(color=F) + 
+    xlim(-lim,lim) + ylim(-lim,lim) + scale_color_grey()
+  
+  if(showLegend==F){g <- g + theme(legend.position="none")}
+  
+  return(g)
+}
+```
+
+## Figure 2
+
+```{r}
+# Abdomen
+abdomen_kmeans.plot <- mod.fviz_cluster(dds.A.transform,
+                                        metadata[metadata$Tissue=="A",],
+                                        showLegend=F,K=2)
+
+# Thorax
+thorax_kmeans.plot <- mod.fviz_cluster(dds.T.transform,
+                                       metadata[metadata$Tissue=="T",],
+                                       showLegend=T,K=2)
+
+# Plot
+fig2 <- cowplot::plot_grid(abdomen_kmeans.plot,thorax_kmeans.plot,labels="auto",
+                        rel_heights=c(1,1),rel_widths=c(.8,1),align="tblr",
+                        label_size=16)
+fig2
+ggsave(file="Manuscript/fig2.pdf", plot=fig2, width=12, height=5)
+```
+
+**Figure 2**: k-means clustering demonstrates **transcriptional similarities between winter bees and nurse bees in fat body tissue (a) and winter bees and foragers in flight muscle tissue (b)**. Dotted lines indicate 95% confidence intervals.
+
+## Figure S5
+
+```{r}
+# Abdomen
+abdomen_kmeans.plot <- mod.fviz_cluster(FvN.A.union.dds.transform,
+                                        metadata[metadata$Tissue=="A",],
+                                        showLegend=F,K=2,
+                                        lim=50)
+
+# Thorax
+thorax_kmeans.plot <- mod.fviz_cluster(FvN.T.union.dds.transform,
+                                       metadata[metadata$Tissue=="T",],
+                                       showLegend=T,K=2,
+                                       lim=50)
+
+figs5 <- cowplot::plot_grid(abdomen_kmeans.plot,thorax_kmeans.plot,labels="auto",
+                        rel_heights=c(1,1),rel_widths=c(.8,1),align="tblr",
+                        label_size=22)
+figs5
+ggsave(file="Manuscript/figs5.pdf", plot=fig2, width=12, height=5)
+```
+
+**Figure S5**: k-means clustering of *a)* fat body and *b)* flight muscle tissue samples for FvN DEGs (*n* = 1,266). Dotted lines indicate 95% confidence intervals.
+
+# Chi-squared tests
+
+We performed chi-squared tests to determine, for each tissue, whether the number of DEGs between winter bees and nurses is significantly different than the number of DEGs between winter bees and foragers.
+
+```{r}
+# Abdomen
+chisq.table.A <- as.matrix(data.frame(Winter_DEG=c(length(WvN.A[[1]])+length(WvN.A[[2]]),
+                                         length(WvF.A[[1]])+length(WvF.A[[2]])),
+                            Winter_not_DEG=c(length(row.names(datExpr))-(length(WvN.A[[1]])+length(WvN.A[[2]])),
+                                             length(row.names(datExpr))-(length(WvF.A[[1]])+length(WvF.A[[2]]))),
+                            row.names=c("to_Nurse",
+                                        "to_Forager")))
+chisq.test.A <- chisq.test(x=chisq.table.A)
+chisq.test.A
+
+# Thorax
+chisq.table.T <- as.matrix(data.frame(Winter_DEG=c(length(WvN.T[[1]])+length(WvN.T[[2]]),
+                                         length(WvF.T[[1]])+length(WvF.T[[2]])),
+                            Winter_not_DEG=c(length(row.names(datExpr))-(length(WvN.T[[1]])+length(WvN.T[[2]])),
+                                             length(row.names(datExpr))-(length(WvF.T[[1]])+length(WvF.T[[2]]))),
+                            row.names=c("to_Nurse",
+                                        "to_Forager")))
+chisq.test.T <- chisq.test(x=chisq.table.T)
+chisq.test.T
+```
+
+There are clearly more genes differentially expressed between winter bees and forager bees (versus nurse bees) in the fat body tissues ($\chi^{2}=211.76$, $p<2.26*10^{-16}$), suggesting that winter bees are more similar to nurse bees in this tissue. In the flight muscle, there are more genes differentially expressed between winter bees and nurse bees (relative to forager bees; $\chi^{2}=895.06$, $p<2.26*10^{-16}$), suggesting that winter bees are more similar to forager bees in this tissue.
+
+# GO Overlap
+
+GO terms found to be associated with diapause in bumble bees (*Bombus terrestris*) [@amsalem_conservation_2015], an oil-collecting bee *Tetrapedia diversipes* [@santos_diapause_2018], alfalfa leaf-cutting bees (*Megachile rotundata*) [@yocum_environmental_2018], and across 11 insect species spanning Diptera, Lepidoptera, and Hymenoptera [@ragland_evolutionary_2019] were compiled from previous studies (Table S16). We then tested whether significantly enriched GO terms (*p* < 0.01) in our study overlapped with these terms.
+
+## Data wrangling
+
+```{r}
+EXT_GO <- read.csv("Manuscript/tabs15.csv")
+
+amsalem_fbgn_GO <- read.table("data/index/amsalem_fbgn_DAVID_GO.txt",sep="\t",header=1)
+amsalem_fbgn_GO <- amsalem_fbgn_GO[amsalem_fbgn_GO$Category%in%c("GOTERM_BP_DIRECT",
+                                                                 "GOTERM_MF_DIRECT",
+                                                                 "GOTERM_CC_DIRECT"),
+                                   "Term"]
+amsalem_fbgn_GO <- sapply(strsplit(amsalem_fbgn_GO,"~"), "[", 1)
+amsalem_fbgn_GO <- data.frame(GO.term=amsalem_fbgn_GO,
+                              Study=rep.int("Amsalem_2015",length(amsalem_fbgn_GO)))
+names(amsalem_fbgn_GO) <- c("GO.ID","Study")
+
+GO_descriptions <- read.csv("data/index/GO_descriptions.csv",stringsAsFactors = F)
+amsalem_fbgn_GO <- merge(GO_descriptions, amsalem_fbgn_GO)
+amsalem_fbgn_GO <- amsalem_fbgn_GO[,c("GO.ID","Description","Study")]
+names(amsalem_fbgn_GO) <- c("GO.ID","Term","Study")
+
+EXT_GO <- rbind(EXT_GO,amsalem_fbgn_GO)
+
+amsalem_flybase <- read.table("data/index/amsalem_2015_flybaseTable.txt",sep=" ",fill=T)
+amsalem_flybase <- amsalem_flybase[,-seq(2,length(names(amsalem_flybase))-1,2)]
+amsalem_flybase <- cbind(FBGN=0,amsalem_flybase)
+amsalem_flybase$FBGN <- sapply(strsplit(amsalem_flybase$V1,"\t"), "[", 1)
+amsalem_flybase$V1 <- sapply(strsplit(amsalem_flybase$V1,"\t"), "[", 2)
+
+af_FBGN <- list()
+for(i in 1:length(amsalem_flybase$FBGN)){
+  temp <- grep('Amel', amsalem_flybase[i,], value=TRUE)
+  temp <- grep('GB', temp, value=TRUE)
+  temp <- sapply(strsplit(temp,"\\\\"), "[", 2)
+  af_FBGN[[i]] <- c(temp,"NA")
+}
+af_FBGN <- do.call(c, af_FBGN)
+af_FBGN <- af_FBGN[af_FBGN != "NA"]
+
+ENTREZ_to_BEEBASE <- read.table("data/index/ENTREZ_to_BEEBASE.txt",sep="\t",header=1)
+
+amsalem_ENTREZ <- ENTREZ_to_BEEBASE[ENTREZ_to_BEEBASE$To%in%af_FBGN,"From"]
+```
+
+## Overlap with previous studies
+
+```{r}
+select.GO <- unique(c(NvF.A.GO[NvF.A.GO$elim<0.01,"GO.ID"],
+                      WvF.A.GO[WvF.A.GO$elim<0.01,"GO.ID"],
+                      WvN.A.GO[WvN.A.GO$elim<0.01,"GO.ID"],
+                      NvF.T.GO[NvF.T.GO$elim<0.01,"GO.ID"],
+                      WvF.T.GO[WvF.T.GO$elim<0.01,"GO.ID"],
+                      WvN.T.GO[WvN.T.GO$elim<0.01,"GO.ID"]))
+select.GO.instudy <- amel_to_dmel[amel_to_dmel$amel.gene%in%gene.list.union,]
+select.GO.instudy <- dmel_go[dmel_go$gene_id%in%select.GO.instudy$dmel.gene,]
+select.GO.instudy <- unique(select.GO.instudy$GOID)
+background.GO <- unique(do.call(c, Custom_GENE2GO@BP))
+background.GO <- background.GO[background.GO%in%select.GO.instudy]
+
+GO.overlap.dat <- data.frame(in.select=c(length(intersect(select.GO,
+                                               unique(EXT_GO$GO.ID))),
+                              length(setdiff(select.GO,
+                                               unique(EXT_GO$GO.ID)))),
+                          not.in.select=c(length(setdiff(unique(EXT_GO$GO.ID),
+                                                select.GO)),
+                                 length(setdiff(background.GO,
+                                                union(select.GO,
+                                                      unique(EXT_GO$GO.ID))))),
+                          row.names=c("in.EXT","not.in.EXT"))
+GO.overlap.dat
+GO.overlap <- fisher.test(GO.overlap.dat,alternative="greater")
+GO.overlap
+intersect(select.GO,EXT_GO$GO.ID)
+```
+
+GO:0048813 - dendrite morphogenesis
+GO:0006468 - protein phosphorylation
+
+## Winter vs. Summer (fat body)
+
+```{r}
+select.GO <- unique(c(WvF.A.GO[WvF.A.GO$elim<0.01,"GO.ID"],
+                      WvN.A.GO[WvN.A.GO$elim<0.01,"GO.ID"]))
+intersect(select.GO,EXT_GO$GO.ID)
+```
+
+GO:0048813 - dendrite morphogenesis
+
+## Winter vs. Summer (flight muscle)
+
+```{r}
+select.GO <- unique(c(WvF.T.GO[WvF.A.GO$elim<0.01,"GO.ID"],
+                      WvN.T.GO[WvN.A.GO$elim<0.01,"GO.ID"]))
+intersect(select.GO,EXT_GO$GO.ID)
+```
+
+GO:0006468 - protein phosphorylation
+
+# Session info
+
+```{r}
+sessionInfo()
+```
+
+# References
