@@ -1,3 +1,3 @@
-# Winter Honeybee Transcriptome
-Analysis of summer nurse & forager and winter honey bee fat body and flight muscle transcriptomes.
+# Methods: Tissue Specific Transcription Patterns Underlie Seasonal Phenotypes in Honey Bees (*Apis mellifera*)
+
 [>View Markdown Site<](https://sbresnahan.github.io/Winter-Honeybee-Transcriptome/)
