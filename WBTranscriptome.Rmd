@@ -20,12 +20,14 @@ bibliography: Manuscript/references.bib
 csl: Manuscript/apa.csl
 output: 
   BiocStyle::html_document:
+    code_folding: show
     toc_float: true
-    code_folding: hide
 ---
 
+GitHub repository for analysis code: [https://github.com/sbresnahan/Winter-Honeybee-Transcriptome](https://github.com/sbresnahan/Winter-Honeybee-Transcriptome)
+
 ```{r setup, message=F}
-# Set the code chunk options for knitr | in engine.opts we set bash = "-l" so that R Studio points to the native bash profile
+# Set the code chunk options for knitr
 knitr::opts_chunk$set(warning=FALSE, message=FALSE, eval=T,
                       engine.opts = list(bash = "-l"))
 # Load packages
@@ -137,48 +139,29 @@ We then compiled the transcript abundance estimates for each sample into an expr
 
 ### Make tx2gene database
 
+```{bash, eval=F}
+cd ${DIR_INDEX}
+
+grep -v '^#' Amel_HAv3.1.gtf | awk '$3=="exon";$3=="CDS" { print $0 }' | \
+   sed 's/.*GeneID://' | awk -F'"' '{print $1}' > transcript_GeneIDs.txt
+
+grep -v '^#' Amel_HAv3.1.gtf | awk '$3=="exon";$3=="CDS" { print $0 }' | \
+   sed 's/.*transcript_id \"//' | awk -F'"' '{print $1}' > transcript_IDs.txt
+
+paste -d'\t' transcript_IDs.txt transcript_GeneIDs.txt | \
+   awk -v OFS="," '{print "rna-"$1, $2}' | sort | uniq > tx2gene.csv
+```
+
 ```{r, eval=F}
-headers <- data.frame(name.full=names(readDNAStringSet(filepath = 'data/index/Amel_HAv3.1_transcripts.fasta', format="fasta")))
-headers.rna <- list()
-headers.gene <- list()
-headers.type <- list()
-for(i in 1:length(headers[[1]])){
-  x = headers[[1]][i]
-  xx = unlist(strsplit(x," "))
-  
-  xxx1 = grep("rna-", xx,value=T)
-  if(isEmpty(xxx1)){xxx1 = "NA-NA"}
-  xxxx1 = substring(xxx1, regexpr("-", xxx1) + 1, nchar(xxx1))
-  headers.rna[i] <- xxxx1
-  
-  xxx2 = grep("GeneID", xx,value=T)[1]
-  if(isEmpty(xxx2)){xxx2 = "NA-NA"}else{
-    xxxx2 = unlist(strsplit(xxx2,","))
-    xxxxx2 = grep("GeneID", xxxx2, value=T)
-    if(isEmpty(xxxxx2)){xxxxx2 = "NA:NA"}
-    xxxxxx2 = sapply(strsplit(xxxxx2,":"), "[", 2)
-    headers.gene[i] <- xxxxxx2}
-  
-  xxx3 = grep("gbkey", xx,value=T)[1]
-  if(isEmpty(xxx3)){xxx3 = "NA=NA"}
-  xxxx3 = sapply(strsplit(xxx3,"="), "[", 2)
-  headers.type[i] <- xxxx3
-}
-tx2gene <- data.frame(tx_id_ref=unlist(headers.rna),
-                      gene_id=unlist(headers.gene),
-                      type=unlist(headers.type))
-tx2gene$tx_id <- paste("rna",tx2gene$tx_id_ref,sep="-")
-tx2gene <- tx2gene[-grep("Gene",tx2gene$type),c("tx_id","gene_id")]
-tx2gene <- tx2gene[!tx2gene$gene_id=="NA",]
-write.csv(tx2gene,"data/index/tx2gene.csv",row.names=F)
-rm(i,headers,headers.gene,headers.rna,headers.type,
-   x,xx,xxx1,xxxx1,xxx2,xxxx2,xxxxx2,xxxxxx2,xxx3,xxxx3)
+tx2gene <- read.csv("data/index/tx2gene.csv",header=F)
+names(tx2gene) <- c("tx_id","gene_id")
+write.csv(tx2gene,"data/index/tx2gene.csv")
 ```
 
 ### tximport kallisto abundance.tsv files
 
 ```{r, eval=F}
-tx2gene <- read.csv("data/index/tx2gene.csv")
+tx2gene <- read.csv("data/index/tx2gene.csv",header=T)
 dirs.kallisto <- list.dirs("data/kallisto", recursive=FALSE)
 files.list <- list()
 for (i in 1:length(dirs.kallisto)){
@@ -193,7 +176,7 @@ names(datExpr) <- dirnames
 CDS_geneIDs <- unique(read.table("data/index/CDS_geneIDs.txt")[,c(1)])
 datExpr <- datExpr[row.names(datExpr)%in%CDS_geneIDs,]
 write.csv(datExpr,"data/res/counts.csv")
-write.csv(datExpr,"Manuscript/tabs2.csv")
+write.csv(datExpr,"Manuscript/tabs4.csv")
 ## Clear all
 rm(list=ls())
 ```
@@ -209,6 +192,7 @@ metadata <- data.frame(lapply(metadata, factor))
 datExpr <- read.csv("data/res/counts.csv")
 row.names(datExpr) <- datExpr$X
 datExpr$X <- NULL
+datExpr <- datExpr[,as.character(metadata$Accession)]
 ```
 
 ## Table S1
@@ -216,17 +200,17 @@ datExpr$X <- NULL
 Through RNA-sequencing we obtained an average transcript abundance of ~13.8 million pseudo-alignments for each biological replicate of nurse, forager, and winter honey bees.
 
 ```{r}
-tabs1 <- data.frame(Estimate=colSums(datExpr))
-tabs1 <- data.frame(Accession=row.names(tabs1),Estimate=tabs1$Estimate)
-tabs1 <- plyr::join(tabs1,metadata,by="Accession")
-tabs1 <- tabs1[,c(1,4,3,6,2)]
-tabs1 <- tabs1[order(tabs1$Tissue,tabs1$Label),]
-tabs1$Tissue <- revalue(tabs1$Tissue, c("A"="Fat body", "T"="Flight muscle"))
-mean(tabs1$Estimate)
-tabs1 %>% 
-  kbl(label="Table S1", caption = "RNAseq library metadata and pseudoalignment rates on the Amel_HAv3.1 kallisto reference transcriptome",
+tabs3 <- data.frame(Estimate=colSums(datExpr))
+tabs3 <- data.frame(Accession=row.names(tabs3),Estimate=tabs3$Estimate)
+tabs3 <- plyr::join(tabs3,metadata,by="Accession")
+tabs3 <- tabs3[,c(1,4,3,6,2)]
+tabs3 <- tabs3[order(tabs3$Tissue,tabs3$Label),]
+tabs3$Tissue <- revalue(tabs3$Tissue, c("A"="Fat body", "T"="Flight muscle"))
+mean(tabs3$Estimate)
+tabs3 %>% 
+  kbl(label="Table S3", caption = "RNAseq library metadata and pseudoalignment rates on the Amel_HAv3.1 kallisto reference transcriptome",
       row.names=F) %>% kable_classic(full_width = F)
-write.csv(tabs1,"Manuscript/tabs1.csv")
+write.csv(tabs3,"Manuscript/tabs3.csv")
 ```
 
 Low count genes (\< 1 count across \> 25% of samples) and genes with 0% variance across all samples were removed from the analysis.
@@ -249,7 +233,6 @@ head(datExpr[c(1:5),c(1:5)]) %>%
 We used DESeq2 [@love_moderated_2014] to assess differential expression of protein-coding genes (DEGs) within tissue types between nurse, forager, and winter bees, using colony as a co-factor. In each analysis, we applied the default Benjamini-Hochberg [@benjamini_controlling_1995] correction and set the threshold for differential expression at $padj<0.05$. Gene ontology enrichment analyses were performed using topGO [@alexa_improved_2006] using Flybase orthologs. To assess sample relationships and variance, hierarchical clustering analysis was conducted on the variance stabilized transformed counts generated by DESeq2.
 
 ```{r}
-# CUSTOM FUNCTION: this function generates an hclust plot via heatmap.2. We use this function simply to automate the process, rather than manually data wrangling for each 
 plot.hclust <- function(data,sample.info,title,tissue=c("A","T")){
   sample.info <- sample.info[sample.info$Tissue==tissue,]
   names(data) <- sample.info$Label
@@ -303,7 +286,6 @@ plot.hclust <- function(data,sample.info,title,tissue=c("A","T")){
         vp = viewport(x = .155, y = 0.35, width = 0.3, height = 0.7))
 }
 
-# CUSTOM FUNCTION: because heatmap.2 does not save a plot environment, we have to do this manually. So rather than call plot.hclust, we will call create.hclustPlot
 create.hclustPlot <- function(...){
   plot_heatmap <- function() plot.hclust(...)
 }
@@ -323,7 +305,6 @@ dds.A.transform <- data.frame(assay(varianceStabilizingTransformation(DESeq.A, b
 ## DESeq: Flight muscle
 
 ```{r}
-# Subset datExpr by columns corresponding to thorax tissue samples
 datExpr.T <- as.matrix(datExpr[names(datExpr)%in%metadata[metadata$Tissue=="T","Accession"]])
 dds.T <- DESeqDataSetFromMatrix(countData=datExpr.T, 
                                 colData=metadata[metadata$Tissue=="T",], 
@@ -426,14 +407,6 @@ ggsave(file="Manuscript/fig1b.pdf", plot=plot.hclust.T(), width=10, height=8)
 
 ```{r}
 # CUSTOM FUNCTION: Generate lists of up- and down-regulated DEGs and optionally save csv
-## object: DESeq object
-## contVar: contrast variable
-## group1: compare group A to...
-## group2: ...group B
-## padj.threshold: filter results by adjusted p value
-## LFC.threshold: filter results by log2fc
-## save.results: save DESeq2 results, filtered by padj.threshold and |LFC.threshold|
-## results.filename: set when save.results==T
 cond.contrast <- function(object,contVar,group1,group2,padj.threshold,
                           LFC.threshold=0,save.results=T,results.filename){
   # Create a data.frame for the results of the DESeq object given a contrast
@@ -461,20 +434,19 @@ cond.contrast <- function(object,contVar,group1,group2,padj.threshold,
 ## Tables S3-S8
 
 ```{r}
-# Call cond.contrast for each contrast
 NvF.A <- cond.contrast(DESeq.A,"Group","N","F",
                        padj.threshold=0.05,
-                       save.results=T,
+                       save.results=F,
                        results.filename="Manuscript/tabs3.csv")
 
 WvF.A <- cond.contrast(DESeq.A,"Group","W","F",
                        padj.threshold=0.05,
-                       save.results=T,
+                       save.results=F,
                        results.filename="Manuscript/tabs4.csv")
 
 WvN.A <- cond.contrast(DESeq.A,"Group","W","N",
                        padj.threshold=0.05,
-                       save.results=T,
+                       save.results=F,
                        results.filename="Manuscript/tabs5.csv")
 ```
 
@@ -482,31 +454,29 @@ WvN.A <- cond.contrast(DESeq.A,"Group","W","N",
 # Call cond.contrast for each contrast
 NvF.T <- cond.contrast(DESeq.T,"Group","N","F",
                        padj.threshold=0.05,
-                       save.results=T,
+                       save.results=F,
                        results.filename="Manuscript/tabs6.csv")
 
 WvF.T <- cond.contrast(DESeq.T,"Group","W","F",
                        padj.threshold=0.05,
-                       save.results=T,
+                       save.results=F,
                        results.filename="Manuscript/tabs7.csv")
 
 WvN.T <- cond.contrast(DESeq.T,"Group","W","N",
                        padj.threshold=0.05,
-                       save.results=T,
+                       save.results=F,
                        results.filename="Manuscript/tabs8.csv")
 ```
 
 ## Table 1
 
 ```{r}
-# Create data.frame of DEG counts for each contrast
 DEGs <- data.frame(Tissue=c(rep("Abdomen",3),rep("Thorax",3)),
                    Contrast=c("NvF","WvN","WvF","NvF","WvN","WvF"),
                    Upregulated=c(length(NvF.A[[1]]),length(WvN.A[[1]]),length(WvF.A[[1]]),
                                  length(NvF.T[[1]]),length(WvN.T[[1]]),length(WvF.T[[1]])),
                    Downregulated=c(length(NvF.A[[2]]),length(WvN.A[[2]]),length(WvF.A[[2]]),
                                  length(NvF.T[[2]]),length(WvN.T[[2]]),length(WvF.T[[2]])))
-# Save DEGs to DEG_table.csv
 write.csv(DEGs,"Manuscript/tab1.csv")
 ```
 
@@ -706,7 +676,7 @@ wss.A.plot <- ggplot(data=wss.A.df, aes(x=cluster, y=WSS)) +
   ylab("Total within-clusters sum of squares") +
   scale_x_continuous(breaks=c(1,2,3,4)) +
   theme(text=element_text(size=16)) +
-  ggtitle("Fat body")
+  ggtitle("")
 wss.A.plot
 ggsave(file="Manuscript/figs4a.pdf", plot=wss.A.plot, width=5, height=5)
 ```
@@ -728,7 +698,7 @@ wss.T.plot <- ggplot(data=wss.T.df, aes(x=cluster, y=WSS)) +
   ylab("Total within-clusters sum of squares") +
   scale_x_continuous(breaks=c(1,2,3,4)) +
   theme(text=element_text(size=16)) +
-  ggtitle("Flight muscle")
+  ggtitle("")
 wss.T.plot
 ggsave(file="Manuscript/figs4b.pdf", plot=wss.T.plot, width=5, height=5)
 ```
@@ -789,18 +759,19 @@ mod.fviz_cluster <- function(data,sample.info,showLegend=T,K,lim=150)
 abdomen_kmeans.plot <- mod.fviz_cluster(dds.A.transform,
                                         metadata[metadata$Tissue=="A",],
                                         showLegend=F,K=2)
+ggsave(file="Manuscript/fig2a.pdf", plot=abdomen_kmeans.plot, 
+       width=6, height=5)
+
+abdomen_kmeans.plot 
 
 # Thorax
 thorax_kmeans.plot <- mod.fviz_cluster(dds.T.transform,
                                        metadata[metadata$Tissue=="T",],
                                        showLegend=T,K=2)
+ggsave(file="Manuscript/fig2b.pdf", plot=thorax_kmeans.plot, 
+       width=6, height=5)
 
-# Plot
-fig2 <- cowplot::plot_grid(abdomen_kmeans.plot,thorax_kmeans.plot,labels="auto",
-                        rel_heights=c(1,1),rel_widths=c(.8,1),align="tblr",
-                        label_size=16)
-fig2
-ggsave(file="Manuscript/fig2.pdf", plot=fig2, width=12, height=5)
+thorax_kmeans.plot
 ```
 
 **Figure 2**: k-means clustering demonstrates **transcriptional similarities between winter bees and nurse bees in fat body tissue (a) and winter bees and foragers in flight muscle tissue (b)**. Dotted lines indicate 95% confidence intervals.
@@ -813,18 +784,18 @@ abdomen_kmeans.plot <- mod.fviz_cluster(FvN.A.union.dds.transform,
                                         metadata[metadata$Tissue=="A",],
                                         showLegend=F,K=2,
                                         lim=50)
+abdomen_kmeans.plot
+ggsave(file="Manuscript/figs5a.pdf", plot=abdomen_kmeans.plot, 
+       width=6, height=5)
 
 # Thorax
 thorax_kmeans.plot <- mod.fviz_cluster(FvN.T.union.dds.transform,
                                        metadata[metadata$Tissue=="T",],
                                        showLegend=T,K=2,
                                        lim=50)
-
-figs5 <- cowplot::plot_grid(abdomen_kmeans.plot,thorax_kmeans.plot,labels="auto",
-                        rel_heights=c(1,1),rel_widths=c(.8,1),align="tblr",
-                        label_size=22)
-figs5
-ggsave(file="Manuscript/figs5.pdf", plot=fig2, width=12, height=5)
+thorax_kmeans.plot
+ggsave(file="Manuscript/figs5b.pdf", plot=thorax_kmeans.plot, 
+       width=6, height=5)
 ```
 
 **Figure S5**: k-means clustering of *a)* fat body and *b)* flight muscle tissue samples for FvN DEGs (*n* = 1,266). Dotted lines indicate 95% confidence intervals.
